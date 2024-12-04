@@ -1,4 +1,4 @@
-A simple tool to manage FreeRADIUS configuration files via a web interface. ⚠️ Not secure for production or public use. For local setups only.
+⚠️ Not secure for production or public use. For local setups only.
 
 # FreeRADIUS UI
 
