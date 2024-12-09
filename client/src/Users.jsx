@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { toast, Toaster } from "react-hot-toast";
 
+const API_BASE_URL = "http://yourip:port"; // Replace with your backend URL
+
 const Users = () => {
   const [users, setUsers] = useState(""); // For raw file content (editable)
   const [newEntry, setNewEntry] = useState(""); // For adding new entries
@@ -25,7 +27,7 @@ const Users = () => {
   // Fetch the users from the backend
   const fetchUsers = () => {
     axios
-      .get("http://10.123.13.107:3000/users", axiosConfig)
+      .get(`${API_BASE_URL}/users`, axiosConfig)
       .then((response) => {
         setUsers(response.data);
         toast.success("User list refreshed successfully!");
@@ -36,7 +38,7 @@ const Users = () => {
   // Function to restart FreeRADIUS
   const restartFreeRADIUS = () => {
     axios
-      .post("http://10.123.13.107:3000/restart", {}, axiosConfig)
+      .post(`${API_BASE_URL}/restart`, {}, axiosConfig)
       .then(() => toast.success("FreeRADIUS restarted successfully!"))
       .catch((error) =>
         toast.error("Failed to restart FreeRADIUS: " + error.message)
@@ -47,7 +49,7 @@ const Users = () => {
   const handleSubmit = () => {
     const payload = { newEntry };
     axios
-      .post("http://10.123.13.107:3000/users", payload, axiosConfig)
+      .post(`${API_BASE_URL}/users`, payload, axiosConfig)
       .then(() => {
         toast.success("User added successfully!");
         setNewEntry(""); // Clear the input field
@@ -59,7 +61,7 @@ const Users = () => {
   const handleUpdate = () => {
     axios
       .put(
-        "http://10.123.13.107:3000/users",
+        `${API_BASE_URL}/users`,
         { updatedContent: users },
         axiosConfig
       )
