@@ -6,14 +6,17 @@ const { exec } = require("child_process");
 const jwt = require("jsonwebtoken");
 
 const app = express();
-const filePath = "/etc/freeradius/3.0/users"; // Path to the FreeRADIUS users file
+const usersFilePath = "/etc/freeradius/3.0/users"; // Path to the FreeRADIUS users file
+const clientsFilePath = "/etc/freeradius/3.0/clients.conf"; // Path to the FreeRADIUS clients file
 
 app.use(cors());
 app.use(express.json());
+
 // Hardcoded credentials from environment variables
 const USER_USERNAME = process.env.USER_USERNAME;
 const USER_PASSWORD = process.env.USER_PASSWORD;
 const JWT_SECRET = process.env.JWT_SECRET;
+
 console.log("USER_USERNAME:", USER_USERNAME);
 console.log("USER_PASSWORD:", USER_PASSWORD);
 console.log("JWT_SECRET:", JWT_SECRET ? "Loaded" : "Not Loaded");
@@ -52,66 +55,69 @@ app.post("/login", (req, res) => {
   }
 });
 
-// Protected endpoint to get the file content
-app.get("/users", authenticateToken, (req, res) => {
-  fs.readFile(filePath, "utf8", (err, data) => {
-    if (err) {
-      console.error("Error reading file:", err);
-      return res.status(500).send("Error reading file");
-    }
-    res.send(data);
-  });
-});
+// Function to handle file operations
+defineFileRoutes(clientsFilePath, "/clients");
+defineFileRoutes(usersFilePath, "/users");
 
-// Protected endpoint to add a new entry
-app.post("/users", authenticateToken, (req, res) => {
-  const { newEntry } = req.body;
-
-  // Validate newEntry
-  if (!newEntry || !newEntry.includes("Cleartext-Password")) {
-    console.error("Invalid entry provided:", req.body);
-    return res.status(400).send("Invalid FreeRADIUS entry");
-  }
-
-  fs.readFile(filePath, "utf8", (err, data) => {
-    if (err) {
-      console.error("Error reading file:", err);
-      return res.status(500).send("Error reading file");
-    }
-
-    // Append the new entry to the file
-    const updatedData = data.trim() + "\n\n" + newEntry;
-
-    fs.writeFile(filePath, updatedData, "utf8", (err) => {
+function defineFileRoutes(filePath, baseRoute) {
+  // Protected endpoint to get the file content
+  app.get(baseRoute, authenticateToken, (req, res) => {
+    fs.readFile(filePath, "utf8", (err, data) => {
       if (err) {
-        console.error("Error writing to file:", err);
+        console.error(`Error reading file ${filePath}:`, err);
+        return res.status(500).send("Error reading file");
+      }
+      res.send(data);
+    });
+  });
+
+  // Protected endpoint to add a new entry
+  app.post(baseRoute, authenticateToken, (req, res) => {
+    const { newEntry } = req.body;
+
+    if (!newEntry || typeof newEntry !== "string") {
+      console.error("Invalid entry provided:", req.body);
+      return res.status(400).send("Invalid entry");
+    }
+
+    fs.readFile(filePath, "utf8", (err, data) => {
+      if (err) {
+        console.error(`Error reading file ${filePath}:`, err);
+        return res.status(500).send("Error reading file");
+      }
+
+      const updatedData = data.trim() + "\n\n" + newEntry;
+
+      fs.writeFile(filePath, updatedData, "utf8", (err) => {
+        if (err) {
+          console.error(`Error writing to file ${filePath}:`, err);
+          return res.status(500).send("Error writing to file");
+        }
+
+        res.send("Entry added successfully");
+      });
+    });
+  });
+
+  // Protected endpoint to update the entire file content
+  app.put(baseRoute, authenticateToken, (req, res) => {
+    const { updatedContent } = req.body;
+
+    if (!updatedContent || typeof updatedContent !== "string") {
+      console.error("Invalid content provided");
+      return res.status(400).send("Invalid content provided");
+    }
+
+    fs.writeFile(filePath, updatedContent, "utf8", (err) => {
+      if (err) {
+        console.error(`Error writing to file ${filePath}:`, err);
         return res.status(500).send("Error writing to file");
       }
 
-      res.send("Entry added successfully");
+      res.send("File updated successfully");
     });
   });
-});
-
-// Protected endpoint to update the entire file content
-app.put("/users", authenticateToken, (req, res) => {
-  const { updatedContent } = req.body;
-
-  // Validate updatedContent
-  if (!updatedContent || typeof updatedContent !== "string") {
-    console.error("Invalid content provided");
-    return res.status(400).send("Invalid content provided");
-  }
-
-  fs.writeFile(filePath, updatedContent, "utf8", (err) => {
-    if (err) {
-      console.error("Error writing to file:", err);
-      return res.status(500).send("Error writing to file");
-    }
-
-    res.send("File updated successfully");
-  });
-});
+}
 
 // Protected endpoint to restart FreeRADIUS
 app.post("/restart", authenticateToken, (req, res) => {
