@@ -6,15 +6,26 @@ const Users = () => {
   const [users, setUsers] = useState(""); // For raw file content (editable)
   const [newEntry, setNewEntry] = useState(""); // For adding new entries
 
+  // Retrieve the token from localStorage
+  const token = localStorage.getItem("token");
+
+  // Common Axios config with Authorization header
+  const axiosConfig = {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  };
+
   // Fetch the file content on load
   useEffect(() => {
     fetchUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Fetch the users from the backend
   const fetchUsers = () => {
     axios
-      .get("http://10.123.13.107:3000/users")
+      .get("http://10.123.13.107:3000/users", axiosConfig)
       .then((response) => {
         setUsers(response.data);
         toast.success("User list refreshed successfully!");
@@ -25,7 +36,7 @@ const Users = () => {
   // Function to restart FreeRADIUS
   const restartFreeRADIUS = () => {
     axios
-      .post("http://10.123.13.107:3000/restart")
+      .post("http://10.123.13.107:3000/restart", {}, axiosConfig)
       .then(() => toast.success("FreeRADIUS restarted successfully!"))
       .catch((error) =>
         toast.error("Failed to restart FreeRADIUS: " + error.message)
@@ -36,7 +47,7 @@ const Users = () => {
   const handleSubmit = () => {
     const payload = { newEntry };
     axios
-      .post("http://10.123.13.107:3000/users", payload)
+      .post("http://10.123.13.107:3000/users", payload, axiosConfig)
       .then(() => {
         toast.success("User added successfully!");
         setNewEntry(""); // Clear the input field
@@ -47,7 +58,11 @@ const Users = () => {
   // Function to update the file
   const handleUpdate = () => {
     axios
-      .put("http://10.123.13.107:3000/users", { updatedContent: users })
+      .put(
+        "http://10.123.13.107:3000/users",
+        { updatedContent: users },
+        axiosConfig
+      )
       .then(() => {
         toast.success("File updated successfully!");
       })
