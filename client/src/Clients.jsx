@@ -16,6 +16,9 @@ const Clients = () => {
     },
   };
 
+  // Define the API base URL
+  const API_BASE_URL = "http://10.123.13.107:3000";
+
   // Fetch the file content on load
   useEffect(() => {
     fetchClients();
@@ -25,20 +28,18 @@ const Clients = () => {
   // Fetch the clients from the backend
   const fetchClients = () => {
     axios
-      .get("http://10.123.13.107:3000/clients", axiosConfig)
+      .get(`${API_BASE_URL}/clients`, axiosConfig)
       .then((response) => {
         setClients(response.data);
         toast.success("Clients list refreshed successfully!");
       })
-      .catch((error) =>
-        toast.error("Error fetching clients: " + error.message)
-      );
+      .catch((error) => toast.error("Error fetching clients: " + error.message));
   };
 
   // Function to restart FreeRADIUS
   const restartFreeRADIUS = () => {
     axios
-      .post("http://10.123.13.107:3000/restart", {}, axiosConfig)
+      .post(`${API_BASE_URL}/restart`, {}, axiosConfig)
       .then(() => toast.success("FreeRADIUS restarted successfully!"))
       .catch((error) =>
         toast.error("Failed to restart FreeRADIUS: " + error.message)
@@ -49,7 +50,7 @@ const Clients = () => {
   const handleSubmit = () => {
     const payload = { newEntry };
     axios
-      .post("http://10.123.13.107:3000/clients", payload, axiosConfig)
+      .post(`${API_BASE_URL}/clients`, payload, axiosConfig)
       .then(() => {
         toast.success("Client added successfully!");
         setNewEntry(""); // Clear the input field
@@ -61,7 +62,7 @@ const Clients = () => {
   const handleUpdate = () => {
     axios
       .put(
-        "http://10.123.13.107:3000/clients",
+        `${API_BASE_URL}/clients`,
         { updatedContent: clients },
         axiosConfig
       )
@@ -79,7 +80,7 @@ const Clients = () => {
       <div className="flex justify-center space-x-4">
         {/* Refresh Button */}
         <button
-          className="px-6 py-2 text-md bg-blue-900 text-white font-bold rounded-lg shadow-lg transform hover:scale-105 transition-all"
+          className="px-6 py-2 bg-blue-900 text-white font-bold rounded-lg shadow-lg transform hover:scale-105 transition-all"
           onClick={fetchClients}
         >
           Refresh Clients List
