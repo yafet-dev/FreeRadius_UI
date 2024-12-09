@@ -7,6 +7,7 @@ const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate(); // Initialize navigate
+  const API_BASE_URL = "http://yourip:port"; 
 
   const handleLogin = () => {
     // Validate input
@@ -16,7 +17,7 @@ const Login = () => {
     }
 
     axios
-      .post("http://10.123.13.107:3000/login", { username, password })
+      .post(`${API_BASE_URL}/login`, { username, password })
       .then((response) => {
         const { token } = response.data;
         if (token) {
